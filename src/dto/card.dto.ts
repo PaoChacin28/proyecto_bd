@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsDateString, IsDefined, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class Card {
     @IsNotEmpty()
@@ -11,7 +11,7 @@ export class Card {
     @IsDateString()
     due_date?: string;
 
+    @IsDefined()
     @IsUUID()
-    @IsNotEmpty()
     listId: string;
 }
