@@ -7,6 +7,9 @@ import { Pool } from "pg";
 import "reflect-metadata";
 import { Board } from "./dto/board.dto";
 import { User } from "./dto/user.dto";
+import { List } from "./dto/list.dto";
+import { Card } from "./dto/card.dto"; 
+import { CardUser } from "./dto/card_user.dto";
 
 dotenv.config();
 
@@ -84,6 +87,77 @@ app.post("/boards", async (req: Request, res: Response) => {
     return res.status(422).json(errors);
   } finally {
     client.release();
+  }
+});
+app.get("/lists", async (req: Request, res: Response) => {
+  try {
+    const text = "SELECT id, name, boardId FROM lists";
+    const result = await pool.query(text);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    res.status(400).json(errors);
+  }
+});
+app.post("/lists", async (req: Request, res: Response) => {
+  let listDto: List = plainToClass(List, req.body);
+  try {
+    await validateOrReject(listDto);
+    const text = "INSERT INTO lists(name, boardId) VALUES($1, $2) RETURNING *";
+    const values = [listDto.name, listDto.boardId];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    res.status(422).json(errors);
+  }
+});
+app.get("/cards", async (req: Request, res: Response) => {
+  try {
+    const text = "SELECT id, title, description, due_date, listId FROM cards";
+    const result = await pool.query(text);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    res.status(400).json(errors);
+  }
+});
+
+
+app.post("/cards", async (req: Request, res: Response) => {
+  let cardDto: Card = plainToClass(Card, req.body);
+  try {
+    await validateOrReject(cardDto);
+
+    const text = "INSERT INTO cards(title, description, due_date, listId) VALUES($1, $2, $3, $4) RETURNING *";
+    const values = [cardDto.title, cardDto.description, cardDto.due_date, cardDto.listId];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    res.status(422).json(errors);
+  }
+});
+
+// Endpoint para asignar un usuario a una tarjeta
+app.post("/card-users", async (req: Request, res: Response) => {
+  let cardUserDto: CardUser = plainToClass(CardUser, req.body);
+  try {
+    await validateOrReject(cardUserDto);
+
+    const text = "INSERT INTO card_users(cardId, userId, isOwner) VALUES($1, $2, $3) RETURNING *";
+    const values = [cardUserDto.cardId, cardUserDto.userId, cardUserDto.isOwner];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    res.status(422).json(errors);
+  }
+});
+app.get("/cards/:cardId/users", async (req: Request, res: Response) => {
+  const { cardId } = req.params;
+  try {
+    const text = "SELECT u.id, u.name, u.email, cu.isOwner FROM users u JOIN card_users cu ON cu.userId = u.id WHERE cu.cardId = $1";
+    const values = [cardId];
+    const result = await pool.query(text, values);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    res.status(400).json(errors);
   }
 });
 
