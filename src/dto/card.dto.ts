@@ -11,7 +11,13 @@ export class Card {
     @IsDateString()
     due_date?: string;
 
+    @IsNotEmpty()
     @IsDefined()
     @IsUUID()
     listId: string;
+
+    @IsNotEmpty()
+    @IsDefined()
+    @IsUUID()
+    userId: string;
 }

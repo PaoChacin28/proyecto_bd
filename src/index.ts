@@ -135,20 +135,20 @@ app.post("/card-users", async (req: Request, res: Response) => {
 });
 //endpoint para crear una tarjeta en una lista y almacenar el usuario que la creo
 app.post("/cards", async (req: Request, res: Response) => {
-  const { title, description, due_date, listId, userId } = req.body; // Se incluye userId para identificar al creador
+  let cardDto: Card = plainToClass(Card, req.body)
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-
+    await validateOrReject(cardDto);
     // Insertar la tarjeta
     const insertCardText = "INSERT INTO cards(title, description, due_date, listId) VALUES($1, $2, $3, $4) RETURNING *";
-    const cardValues = [title, description, due_date, listId];
+    const cardValues = [cardDto.title, cardDto.description, cardDto.due_date, cardDto.listId];
     const cardResult = await client.query(insertCardText, cardValues);
     const cardId = cardResult.rows[0].id;
 
     // Asociar el usuario como creador de la tarjeta
     const insertCardUserText = "INSERT INTO card_users(cardId, userId, isOwner) VALUES($1, $2, true) RETURNING *";
-    const cardUserValues = [cardId, userId];
+    const cardUserValues = [cardId, cardDto.userId];
     await client.query(insertCardUserText, cardUserValues);
 
     await client.query("COMMIT");

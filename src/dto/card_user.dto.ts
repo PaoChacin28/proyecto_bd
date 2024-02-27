@@ -1,4 +1,4 @@
-// En un archivo llamado 
+
 import { IsBoolean, IsUUID } from 'class-validator';
 
 export class CardUser {
